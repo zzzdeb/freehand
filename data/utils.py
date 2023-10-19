@@ -6,7 +6,6 @@ import openpyxl
 
 
 def read_frame_transform(filename, scan_crop_indices, resample_factor=1, delay_tform=0):
-    print(filename)
 
     get_transform = lambda ii, image : list(map(float,image.GetMetaData('Seq_Frame{:04d}_ProbeToTrackerTransform'.format(ii)).split(' ')))
     get_transform_status = lambda ii, image : image.GetMetaData('Seq_Frame{:04d}_ProbeToTrackerTransformStatus'.format(ii))=="OK"

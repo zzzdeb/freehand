@@ -5,6 +5,7 @@ import torch
 from torchvision.models import efficientnet_b1
 # from torchvision.models import efficientnet_b0, efficientnet_b1, efficientnet_b2, efficientnet_b3, efficientnet_b4, efficientnet_b5, efficientnet_b6, efficientnet_b7
 # from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
+from torch.utils.tensorboard  import SummaryWriter
 
 from freehand.loader import SSFrameDataset
 from freehand.network import build_model
@@ -21,6 +22,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 RESAMPLE_FACTOR = 4
 FILENAME_CALIB = "data/calib_matrix.csv"
 FILENAME_FRAMES = os.path.join(os.path.expanduser("~"), "workspace", 'frames_res{}'.format(RESAMPLE_FACTOR)+".h5")
+FROM_EPOCH = 0
+FILENAME_WEIGHTS = 'model_epoch%08d' % FROM_EPOCH
 
 
 
@@ -41,6 +44,8 @@ FREQ_SAVE = 100
 SAVE_PATH = "results"
 if not os.path.exists(SAVE_PATH):
     os.makedirs(SAVE_PATH)
+
+writer = SummaryWriter()
 
 dataset_all = SSFrameDataset(
     filename_h5=FILENAME_FRAMES, 
@@ -117,13 +122,15 @@ model = build_model(
     in_frames = NUM_SAMPLES, 
     out_dim = pred_dim
     ).to(device)
+if FROM_EPOCH > 0:
+    model.load_state_dict(torch.load(os.path.join(SAVE_PATH,FILENAME_WEIGHTS), map_location=torch.device(device)))
+    model.train(False)
 
 
 ## train
 optimiser = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
 now = time.time()
-for epoch in range(NUM_EPOCHS):
-    print('Epoch: ', epoch, ' time: ', time.time() - now)
+for epoch in range(FROM_EPOCH, NUM_EPOCHS):
     for step, (frames, tforms, tforms_inv) in enumerate(train_loader):
 
         frames, tforms, tforms_inv = frames.to(device), tforms.to(device), tforms_inv.to(device)    
@@ -137,6 +144,8 @@ for epoch in range(NUM_EPOCHS):
 
         loss = criterion(preds, labels)
         dist = metrics(preds, labels)
+
+        writer.add_scalar('Loss/train', loss, epoch)
 
         loss.backward()
         optimiser.step()
@@ -165,11 +174,12 @@ for epoch in range(NUM_EPOCHS):
 
         running_loss_val /= (step+1)
         running_dist_val /= (step+1)
-        print('[Epoch %d] val-loss=%.3f, val-dist=%.3f' % (epoch, running_loss_val, running_dist_val.mean()))
+        print('[Epoch %d] val-loss=%.3f, val-dist=%.3f time: %.3f' % (epoch, running_loss_val, running_dist_val.mean(), time.time() - now))
         if running_dist_val.shape[0]>1:
             print('%.2f '*running_dist_val.shape[0] % tuple(running_dist_val)) 
         
         torch.save(model.state_dict(), os.path.join(SAVE_PATH,'model_epoch%08d' % epoch)) 
         print('Model parameters saved.')
+        writer.flush()
         
         model.train(True)        
