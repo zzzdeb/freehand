@@ -3,14 +3,16 @@ import os
 
 import h5py
 import numpy as np
+from pathlib import Path
 from matplotlib import pyplot as plt
+from config import ROOT
 # from mpl_toolkits.mplot3d import Axes3D
 
 from calib import read_calib_matrices
 
 
 RESAMPLE_FACTOR = 4
-FILENAME_CALIB = "calib_matrix.csv"
+FILENAME_CALIB = "data/calib_matrix.csv"
 FLAG_SCANFILE = False
 
 
@@ -19,7 +21,7 @@ tform_calib = read_calib_matrices(filename_calib=FILENAME_CALIB, resample_factor
 
 
 ## using the frame file
-FILENAME_FRAMES = os.path.join(os.path.expanduser("~"), "workspace", 'frames_res{}'.format(RESAMPLE_FACTOR)+".h5")
+FILENAME_FRAMES = ROOT / f'frames_res{RESAMPLE_FACTOR}.h5'
 idx_sub = 15
 idx_scan = 5
 fh5_frames = h5py.File(FILENAME_FRAMES,'r')  

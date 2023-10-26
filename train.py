@@ -11,9 +11,11 @@ from freehand.loader import SSFrameDataset
 from freehand.network import build_model
 from freehand.loss import PointDistance
 from data.calib import read_calib_matrices
+from data.config import ROOT
 from freehand.transform import LabelTransform, PredictionTransform, ImageTransform
 from freehand.utils import pair_samples, reference_image_points, type_dim
 import time
+from pathlib import Path
 
 
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -21,7 +23,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 RESAMPLE_FACTOR = 4
 FILENAME_CALIB = "data/calib_matrix.csv"
-FILENAME_FRAMES = os.path.join(os.path.expanduser("~"), "workspace", 'frames_res{}'.format(RESAMPLE_FACTOR)+".h5")
+FILENAME_FRAMES = ROOT / f'frames_res{RESAMPLE_FACTOR}.h5'
 FROM_EPOCH = 0
 FILENAME_WEIGHTS = 'model_epoch%08d' % FROM_EPOCH
 
@@ -48,7 +50,7 @@ if not os.path.exists(SAVE_PATH):
 writer = SummaryWriter()
 
 dataset_all = SSFrameDataset(
-    filename_h5=FILENAME_FRAMES, 
+    filename_h5=str(FILENAME_FRAMES), 
     num_samples=NUM_SAMPLES, 
     sample_range=SAMPLE_RANGE
     )

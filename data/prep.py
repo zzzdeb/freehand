@@ -4,18 +4,18 @@ import h5py
 import numpy as np
 from pathlib import Path
 
-from utils import read_frame_transform, read_scan_crop_indices_file
+from utils import read_frame_transform
+from config import ROOT
 import pandas as pd
 
 
 
 FLAG_SCANFILE = False
 
-HOME = Path("~").expanduser()
-DIR_RAW = HOME / "workspace/forearm_US"
+DIR_RAW = ROOT / "forearm_US"
 NUM_SCANS = 12
 RESAMPLE_FACTOR = 4
-PATH_SAVE = HOME / "workspace/"
+PATH_SAVE = ROOT
 DELAY_TFORM = 4  # delayed tform from temporal calibration
 fh5_path = PATH_SAVE / f'frames_res{RESAMPLE_FACTOR}.h5'
 if fh5_path.is_file():
